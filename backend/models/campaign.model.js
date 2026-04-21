@@ -41,6 +41,11 @@ const campaignSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    category: {
+      type: String,
+      enum: ["Technology", "Environment", "Health", "Arts", "Community", "Education"],
+      required: true,
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

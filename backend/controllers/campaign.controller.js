@@ -7,11 +7,11 @@ const { AppError } = require('../middleware/error.middleware');
  */
 const createCampaign = async (req, res, next) => {
   try {
-    const { title, description, goalAmount, deadline, image } = req.body;
+    const { title, description, goalAmount, deadline, image, category } = req.body;
 
     // Validate required fields
-    if (!title || !description || !goalAmount || !deadline) {
-      return next(new AppError('Title, description, goalAmount, and deadline are required.', 400));
+    if (!title || !description || !goalAmount || !deadline || !category) {
+      return next(new AppError('All fields including category are required.', 400));
     }
 
     const campaign = await Campaign.create({
@@ -20,10 +20,10 @@ const createCampaign = async (req, res, next) => {
       goalAmount,
       deadline,
       image: image || '',
+      category, // 🔥 THIS WAS MISSING
       owner: req.user._id,
     });
 
-    // Populate owner info for the response
     await campaign.populate('owner', 'name email');
 
     res.status(201).json({
