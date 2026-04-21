@@ -178,11 +178,45 @@ const deleteCampaign = async (req, res, next) => {
     next(err);
   }
 };
+/**
+ * POST /api/campaigns/:id/pledge
+ * Add funds to a campaign
+ */
+const pledgeToCampaign = async (req, res, next) => {
+  try {
+    const { amount } = req.body;
 
+    if (!amount || amount <= 0) {
+      return next(new AppError("Invalid pledge amount", 400));
+    }
+
+    const campaign = await Campaign.findById(req.params.id);
+
+    if (!campaign) {
+      return next(new AppError("Campaign not found", 404));
+    }
+
+    // 🔥 update raised amount
+    campaign.raisedAmount = (campaign.raisedAmount || 0) + amount;
+
+    await campaign.save();
+
+    await campaign.populate("owner", "name email");
+
+    res.status(200).json({
+      success: true,
+      message: "Pledge successful",
+      data: { campaign },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 module.exports = {
   createCampaign,
   getAllCampaigns,
   getCampaignById,
   updateCampaign,
   deleteCampaign,
+  pledgeToCampaign,
 };

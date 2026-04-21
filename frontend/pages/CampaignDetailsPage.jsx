@@ -475,6 +475,7 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
   const [pledged, setPledged] = useState(false);
   const { user } = useAuth();
 
+  // ---------------- FETCH CAMPAIGN ----------------
   useEffect(() => {
     if (!campaignId) {
       navigate("home");
@@ -484,7 +485,9 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
     const fetchCampaign = async () => {
       try {
         const res = await campaignsAPI.getById(campaignId);
-        setCampaign(res.data.data);
+
+        // ✅ FIXED HERE
+        setCampaign(res.data.data.campaign);
       } catch {
         const mock = MOCK_CAMPAIGNS.find(c => c._id === campaignId);
         setCampaign(mock || null);
@@ -496,6 +499,7 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
     fetchCampaign();
   }, [campaignId]);
 
+  // ---------------- HELPERS ----------------
   const formatDate = (d) =>
     new Date(d).toLocaleDateString("en-US", {
       month: "long",
@@ -506,10 +510,8 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
   const formatAmt = (n) =>
     `$${(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
-  // ✅ SAFE VALUES
   const raised = campaign?.raisedAmount || 0;
   const goal = campaign?.goalAmount || 0;
-
   const pct = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
 
   const daysRemaining = campaign?.deadline
@@ -523,15 +525,34 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
     : 0;
 
   const isOwner =
-    user && campaign?.createdBy && user._id === campaign.createdBy._id;
+    user && campaign?.owner && user._id === campaign.owner._id;
 
-  const handlePledge = () => {
+  // ---------------- PLEDGE ----------------
+  const handlePledge = async () => {
     if (!user) {
       navigate("login");
       return;
     }
-    if (!pledgeAmount || parseFloat(pledgeAmount) <= 0) return;
-    setPledged(true);
+
+    if (!pledgeAmount || Number(pledgeAmount) <= 0) return;
+
+    try {
+      const token = localStorage.getItem("cf_token");
+
+      const res = await campaignsAPI.pledge(
+        campaign._id,
+        Number(pledgeAmount),
+        token
+      );
+
+      // ✅ update UI from backend
+      setCampaign(res.data.data.campaign);
+
+      setPledged(true);
+    } catch (err) {
+      console.log("ERROR:", err.response?.data);
+      alert(err.response?.data?.message || "Pledge failed");
+    }
   };
 
   // ---------------- LOADING ----------------
@@ -562,7 +583,11 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
       {/* HERO */}
       <div className="detail-hero">
         <img
-          src={campaign?.image || MOCK_CAMPAIGNS[0]?.image}
+          src={
+            campaign?.image
+              ? campaign.image
+              : "https://via.placeholder.com/800x400?text=No+Image"
+          }
           alt={campaign?.title}
           className="detail-hero-img"
         />
@@ -577,13 +602,11 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
         <div className="detail-main">
           <div className="detail-owner-row">
             <div className="owner-avatar">
-              {campaign?.createdBy?.name?.charAt(0) || "?"}
+              {campaign?.owner?.name?.charAt(0) || "?"}
             </div>
+
             <span>
-              by{" "}
-              <strong>
-                {campaign?.createdBy?.name || "Anonymous"}
-              </strong>
+              by <strong>{campaign?.owner?.name || "Anonymous"}</strong>
             </span>
 
             {isOwner && (
@@ -595,7 +618,6 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
 
           <h1 className="detail-title">{campaign?.title}</h1>
 
-          {/* ✅ YOUR DESCRIPTION */}
           <p className="detail-description">
             {campaign?.description || "No description provided."}
           </p>
@@ -613,6 +635,7 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
           {/* MILESTONES */}
           <div className="detail-section">
             <h3 className="detail-section-title">Milestones</h3>
+
             <div className="milestones">
               {[25, 50, 75, 100].map((m) => (
                 <div
@@ -640,7 +663,6 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
         {/* SIDEBAR */}
         <aside className="detail-sidebar">
           <div className="sidebar-card">
-            {/* PROGRESS */}
             <div className="sidebar-progress">
               <div className="sidebar-amount">
                 {formatAmt(raised)}
@@ -658,11 +680,10 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
               />
             </div>
 
-            {/* STATS */}
             <div className="sidebar-stats">
               <div className="s-stat">
                 <span className="s-stat-val">
-                  {Math.round(raised / 120)}
+                  {Math.round((raised || 0) / 120)}
                 </span>
                 <span className="s-stat-lbl">Backers</span>
               </div>
@@ -678,7 +699,6 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
               </div>
             </div>
 
-            {/* DEADLINE */}
             <div className="sidebar-deadline">
               Deadline:{" "}
               <strong>
@@ -735,7 +755,7 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
                 <p>
                   Thank you for your pledge of{" "}
                   <strong>
-                    {formatAmt(parseFloat(pledgeAmount))}
+                    {formatAmt(Number(pledgeAmount))}
                   </strong>
                 </p>
               </div>

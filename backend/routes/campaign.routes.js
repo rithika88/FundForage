@@ -6,6 +6,7 @@ const {
   getCampaignById,
   updateCampaign,
   deleteCampaign,
+  pledgeToCampaign,
 } = require('../controllers/campaign.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -17,5 +18,5 @@ router.get('/:id', getCampaignById);
 router.post('/', protect, createCampaign);
 router.put('/:id', protect, updateCampaign);
 router.delete('/:id', protect, deleteCampaign);
-
+router.post('/:id/pledge', protect, pledgeToCampaign);
 module.exports = router;

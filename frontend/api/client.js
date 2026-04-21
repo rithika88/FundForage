@@ -59,6 +59,16 @@ export const campaignsAPI = {
                 Authorization: `Bearer ${token}`,
             },
         }),
+    pledge: (id, amount, token) =>
+        API.post(
+            `/campaigns/${id}/pledge`,
+            { amount },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        ),
 };
 
 // ---------------- MOCK DATA (optional) ----------------

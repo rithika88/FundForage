@@ -6,9 +6,9 @@ import CreateCampaignPage from "./pages/CreateCampaignPage";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import { AuthProvider } from "./context/AuthContext";
-
+import LandingPage from "./pages/LandingPage";
 export default function App() {
-  const [currentPage, setCurrentPage] = useState("home");
+  const [currentPage, setCurrentPage] = useState("landing");
   const [selectedCampaignId, setSelectedCampaignId] = useState(null);
 
   const navigate = (page, id = null) => {
@@ -38,16 +38,19 @@ export default function App() {
 
       case "login":
         return <LoginPage navigate={navigate} />;
-
+      case "landing":
+        return <LandingPage navigate={navigate} />;
       default:
-        return <HomePage navigate={navigate} />;
+        return <LandingPage navigate={navigate} />;
     }
   };
 
   return (
     <AuthProvider>
       <div className="app-root">
-        <Navbar currentPage={currentPage} navigate={navigate} />
+        {currentPage !== "landing" && (
+          <Navbar currentPage={currentPage} navigate={navigate} />
+        )}
         <main className="main-content">{renderPage()}</main>
       </div>
     </AuthProvider>
