@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/campaigns', campaignRoutes);
-
+app.use("/api/pledges", require("./routes/pledge.routes"));
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Crowdfunding API is running' });

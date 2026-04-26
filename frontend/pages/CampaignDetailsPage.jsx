@@ -467,13 +467,14 @@ import { useState, useEffect } from "react";
 import ProgressBar from "../components/ProgressBar";
 import { campaignsAPI, MOCK_CAMPAIGNS } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { pledgeAPI } from "../api/client";
 
 export default function CampaignDetailsPage({ campaignId, navigate }) {
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pledgeAmount, setPledgeAmount] = useState("");
   const [pledged, setPledged] = useState(false);
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   // ---------------- FETCH CAMPAIGN ----------------
   useEffect(() => {
@@ -528,41 +529,66 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
     user && campaign?.owner && user._id === campaign.owner._id;
 
   // ---------------- PLEDGE ----------------
+  // const handlePledge = async () => {
+  //   if (!user) {
+  //     navigate("login");
+  //     return;
+  //   }
+
+  //   if (!pledgeAmount || Number(pledgeAmount) <= 0) return;
+
+  //   try {
+  //     const token = localStorage.getItem("cf_token");
+
+  //     const res = await campaignsAPI.pledge(
+  //       campaign._id,
+  //       Number(pledgeAmount),
+  //       token
+  //     );
+
+  //     // ✅ update UI from backend
+  //     setCampaign(res.data.data.campaign);
+
+  //     setPledged(true);
+  //   } catch (err) {
+  //     console.log("ERROR:", err.response?.data);
+  //     alert(err.response?.data?.message || "Pledge failed");
+  //   }
+  // };
   const handlePledge = async () => {
-    if (!user) {
-      navigate("login");
-      return;
-    }
-
-    if (!pledgeAmount || Number(pledgeAmount) <= 0) return;
-
     try {
-      const token = localStorage.getItem("cf_token");
+      if (!pledgeAmount || Number(pledgeAmount) <= 0) {
+        alert("Enter valid amount");
+        return;
+      }
 
-      const res = await campaignsAPI.pledge(
-        campaign._id,
-        Number(pledgeAmount),
+      const token = localStorage.getItem("cf_token"); // ✅ FIX
+
+      if (!token) {
+        navigate("login");
+        return;
+      }
+
+      await pledgeAPI.create(
+        {
+          campaignId: campaign._id,
+          amount: Number(pledgeAmount),
+        },
         token
       );
 
-      // ✅ update UI from backend
+      alert("Pledge successful!");
+
+      const res = await campaignsAPI.getById(campaign._id);
       setCampaign(res.data.data.campaign);
 
       setPledged(true);
     } catch (err) {
-      console.log("ERROR:", err.response?.data);
+      console.error(err);
       alert(err.response?.data?.message || "Pledge failed");
     }
   };
 
-  // ---------------- LOADING ----------------
-  if (loading)
-    return (
-      <div className="detail-loading">
-        <div className="spinner" />
-        <p>Loading campaign…</p>
-      </div>
-    );
 
   // ---------------- NOT FOUND ----------------
   if (!campaign)
@@ -577,7 +603,7 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
         </button>
       </div>
     );
-
+  const isCompleted = campaign.raisedAmount >= campaign.goalAmount;
   return (
     <div className="detail-page">
       {/* HERO */}
@@ -683,9 +709,10 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
             <div className="sidebar-stats">
               <div className="s-stat">
                 <span className="s-stat-val">
-                  {Math.round((raised || 0) / 120)}
+                  {campaign.backersCount || 0}
                 </span>
                 <span className="s-stat-lbl">Backers</span>
+                {/* <p>{campaign.backersCount} backers</p> */}
               </div>
 
               <div className="s-stat">
@@ -738,14 +765,21 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
                     </button>
                   ))}
                 </div>
-
+                {isCompleted && (
+                  <p style={{ color: "#4ade80", marginBottom: "10px" }}>
+                    This campaign has reached its goal!
+                  </p>
+                )}
                 <button
                   className="btn-primary btn-full"
                   onClick={handlePledge}
+                  disabled={isCompleted}
                 >
-                  {user
-                    ? "Back this campaign"
-                    : "Sign in to back"}
+                  {!user
+                    ? "Sign in to back"
+                    : isCompleted
+                      ? "Goal Reached"
+                      : "Back this campaign"}
                 </button>
               </div>
             ) : (
@@ -758,6 +792,7 @@ export default function CampaignDetailsPage({ campaignId, navigate }) {
                     {formatAmt(Number(pledgeAmount))}
                   </strong>
                 </p>
+
               </div>
             )}
           </div>

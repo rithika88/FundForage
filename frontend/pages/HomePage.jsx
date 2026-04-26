@@ -314,13 +314,24 @@ export default function HomePage({ navigate }) {
   });
 
   // 📊 STATS
+  // const stats = {
+  //   total: campaigns?.length || 0,
+  //   raised: (campaigns || []).reduce(
+  //     (sum, c) => sum + (c.raisedAmount || 0),
+  //     0
+  //   ),
+  //   backers: (campaigns?.length || 0) * 47,
+  // };
   const stats = {
     total: campaigns?.length || 0,
     raised: (campaigns || []).reduce(
       (sum, c) => sum + (c.raisedAmount || 0),
       0
     ),
-    backers: (campaigns?.length || 0) * 47,
+    backers: (campaigns || []).reduce(
+      (sum, c) => sum + (c.backersCount || 0),
+      0
+    ),
   };
 
   return (
@@ -373,7 +384,7 @@ export default function HomePage({ navigate }) {
           <div className="hero-stats">
             <div className="hero-stat">
               <span className="hero-stat-value">
-                ${(stats.raised / 1000).toFixed(0)}K+
+                ${stats.raised.toLocaleString()}+
               </span>
               <span className="hero-stat-label">Total raised</span>
             </div>

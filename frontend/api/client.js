@@ -47,6 +47,7 @@ export const authAPI = {
         }),
 };
 
+
 // ---------------- CAMPAIGNS ----------------
 export const campaignsAPI = {
     getAll: () => API.get("/campaigns"),
@@ -69,6 +70,14 @@ export const campaignsAPI = {
                 },
             }
         ),
+};
+export const pledgeAPI = {
+    create: (data, token) =>
+        API.post("/pledges", data, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }),
 };
 
 // ---------------- MOCK DATA (optional) ----------------

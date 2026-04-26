@@ -56,12 +56,17 @@ const campaignSchema = new mongoose.Schema(
       enum: ['active', 'completed', 'cancelled'],
       default: 'active',
     },
+    backersCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
+
 );
 
 // Virtual: percentage funded

@@ -62,6 +62,7 @@ export default function CreateCampaignPage({ navigate }) {
         goalAmount: parseFloat(form.goalAmount),
         deadline: form.deadline,
         image: form.image,
+        category: form.category,
       }, token);
       setSuccess(true);
     } catch (e) {

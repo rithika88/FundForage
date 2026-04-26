@@ -45,7 +45,7 @@ const getAllCampaigns = async (req, res, next) => {
     const {
       page = 1,
       limit = 10,
-      status = 'active',
+      status,
       sort = '-createdAt',
       search,
     } = req.query;
